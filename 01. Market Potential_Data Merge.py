@@ -23,11 +23,6 @@ OUTPUT_FOLDER = "2. Output"  # 출력 경로 고정
 # =============================================================================
 
 ### 산업단지, 주차장, 농지 가중치 데이터
-
-# 기본 데이터 확인
-df_base = pd.read_csv(RAW_FOLDER + '/격자b_SGIS내륙정보(2025).csv')
-print(df_base.head())
-
 #%%
 # ### 산업단지, 주차장, 농지 만들기
 extra_file = [
@@ -37,7 +32,8 @@ extra_file = [
 ]
 
 # 병합 실행
-df_base = pd.read_csv(RAW_FOLDER + '/격자b_SGIS내륙정보.csv')
+df_base = pd.read_csv(RAW_FOLDER + '/격자b_SGIS내륙정보(2025).csv')
+print(df_base.head())
 df_merged = df_base.copy()  # 원본 유지
 area_count = 0  # area 컬럼 개수 추적
 
@@ -121,7 +117,7 @@ file_list = [
     '/전국_GIS건물(주택)+실폭도로_100m버퍼.csv',
     '/1km일사량_within.csv',
     '/전체건축물.csv',
-    '/격자b_SGIS내륙정보.csv',
+    '/격자b_SGIS내륙정보(2025).csv',
     '/기술영향요인5종_32652.csv',
     './Dist_kepco_IDcorrected_32652.csv',
     './GRID_100m_bstats_240806_id_added(v1.1).csv',
@@ -231,9 +227,6 @@ df_merged['id'] = df_merged['id'].round().astype(int)
 cond_reject = ['배제21종', '배제24종']  #조건에 해당하는
 calc_reject = ['배제28종(1-26+6m폭도로100m버퍼+철도)'
               ,'영농지_S1','영농지_S2','영농지_S3','영농지_S4'
-              ,'S3_area_solar__202511131509'
-              ,'영농지_S2_area_수정본__202511131819'
-              ,'_영농지_S2_area_수정본_6m__202511141044'
               , '배제29종(실조례안)']
 
 
