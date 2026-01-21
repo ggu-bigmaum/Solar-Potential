@@ -26,10 +26,9 @@ from shapely.geometry import box
 import folium
 from branca.colormap import linear
 import contextily as ctx
+
+
 #%%
-
-
-
 # 한글 폰트 설정
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
@@ -406,7 +405,7 @@ def run_scenario_with_facade(df_base, calcul_col, condition_col='cond_reject_배
         calculate_capacity(df_scenario, [result_col])
 
     # ▣ 결과 컬럼 필터링
-    id_cols = ['id', 'sido_nm', 'sigungu_nm', 'adm_nm']
+    id_cols = ['id', 'SIDO_NM', 'SIGUNGU_NM', 'ADM_NM']
     result_cols = id_cols + [col for col in df_scenario.columns if '시장잠재량' in col]
     return df_scenario[result_cols]
 
@@ -430,18 +429,18 @@ def save_result_csv(df, filename, output_folder="2. Output"):
 
 def summarize_by_sido(df):
     columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
-    result = df.groupby('sido_nm')[columns_to_sum].sum().reset_index()
+    result = df.groupby('SIDO_NM')[columns_to_sum].sum().reset_index()
     return result
 
 def summarize_by_sigungu(df):
     columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
-    result = df.groupby(['sido_nm', 'sigungu_nm', 'SIGUNGU_CD'])[columns_to_sum].sum().reset_index()
+    result = df.groupby(['SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD'])[columns_to_sum].sum().reset_index()
     return result
 
 def summarize_sigungu_by_sido(df, selected_sido):
-    df_filtered = df[df['sido_nm'] == selected_sido]
+    df_filtered = df[df['SIDO_NM'] == selected_sido]
     columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
-    result = df_filtered.groupby('sigungu_nm')[columns_to_sum].sum().reset_index()
+    result = df_filtered.groupby('SIGUNGU_NM')[columns_to_sum].sum().reset_index()
     return result
 
 
@@ -476,13 +475,22 @@ def main(scenario_name: str,
     print("데이터 로딩 중...")
     parameter = pd.read_excel('./1. Raw Data/시장잠재량 Parameter_4.xlsx')
     parameter_dict = parameter.iloc[0].to_dict()
-    # df = pd.read_csv('data_merge.csv', low_memory=False)
     
     
     
     ### 여기 - 병합 데이터 파일명을 data_merge__{YYYYMMDDHHMM}.csv 형식으로 수정 필요
-    df = pd.read_csv('data_merge_영농.csv', low_memory=False)
+    ##  ***
+    ##  ***
     
+    df = pd.read_csv('data_merge__202601211146.csv', low_memory=False)
+    
+    ## ***
+    ## ***
+
+
+
+
+
     # 2. 연산 전 기초 계산
     print("기초 데이터 처리 중...")
     start_time = time.time()
@@ -748,10 +756,12 @@ def main(scenario_name: str,
     else:
         # 기본: 시장잠재량 결과만 반환
         return df_result
-#%%
-df_result.columns.to_list()
+    
+
+
 #%%
 # 실행
+# 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
 # scenario_name = 'calc_reject_배제29종(실조례안)'
 scenario_name = 'calc_reject_영농지_S1'
