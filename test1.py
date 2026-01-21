@@ -435,7 +435,7 @@ def summarize_by_sido(df):
 
 def summarize_by_sigungu(df):
     columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
-    result = df.groupby('sigungu_nm')[columns_to_sum].sum().reset_index()
+    result = df.groupby(['sido_nm', 'sigungu_nm', 'SIGUNGU_CD'])[columns_to_sum].sum().reset_index()
     return result
 
 def summarize_sigungu_by_sido(df, selected_sido):
