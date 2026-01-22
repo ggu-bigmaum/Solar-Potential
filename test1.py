@@ -764,7 +764,7 @@ def main(scenario_name: str,
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
 # scenario_name = 'calc_reject_배제29종(실조례안)'
-scenario_name = 'calc_reject_영농지_S1'
+scenario_name = 'calc_reject_영농지_S2'
 df_result = main(scenario_name)  # main 함수 실행
 print(df_result.head()) # 결과 DataFrame 확인
 
