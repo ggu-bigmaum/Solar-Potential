@@ -15,7 +15,7 @@
 ## 🗂️ 프로젝트 구조
 
 ```bash
-solar-test/
+Solar-Potential/
 ├── 01. Market Potential_Data Merge.py    # 데이터 병합 스크립트
 ├── test1.py                              # 시장잠재량 분석 메인 코드
 ├── CLAUDE.md                             # Claude Code 가이드
@@ -23,7 +23,7 @@ solar-test/
 ├── 1. Raw Data/                          # 원본 데이터 (25 CSV + 1 Excel)
 │   ├── 시장잠재량 Parameter_4.xlsx       # 경제성 파라미터
 │   ├── b_전국격자_100_통합_20250507.csv  # 기준 격자 데이터
-│   ├── 격자b_SGIS내륙정보.csv            # 내륙 격자 정보
+│   ├── 격자b_SGIS내륙정보(2025).csv      # 내륙 격자 정보 (행정코드 포함)
 │   ├── 산업단지.csv                      # 가중치 계산용
 │   ├── 주차장(교통시설UQS200210290).csv
 │   ├── 경지계-농업진흥구역(UEA110)_v2.csv
@@ -41,7 +41,7 @@ solar-test/
 │   ├── Dist_kepco_IDcorrected_32652.csv
 │   ├── 배제21종.csv                      # 배제지역 시나리오
 │   ├── 배제24종.csv
-│   ├── 배제28종(1-26+6m폭도로100m버퍼+철도).csv
+│   ├── 배제28종(1-26+6m폭도로100m버퍼+철도).csv  # (선택)
 │   ├── 배제29종(실조례안).csv
 │   ├── 영농지_S1.csv                     # 영농형 시나리오
 │   ├── 영농지_S2.csv
@@ -67,8 +67,8 @@ solar-test/
 
 1. 저장소 클론
 ```bash
-git clone https://github.com/ggu-bigmaum/solar-test.git
-cd solar-test
+git clone https://github.com/ggu-bigmaum/Solar-Potential.git
+cd Solar-Potential
 ```
 
 2. 필요한 패키지 설치
@@ -95,7 +95,7 @@ python "01. Market Potential_Data Merge.py"
 
 ### 2단계: 파일명 업데이트
 
-`test1.py` 파일의 484번 라인 수정:
+`test1.py` 파일의 485번 라인 수정:
 ```python
 df = pd.read_csv('data_merge__{생성된timestamp}.csv', low_memory=False)
 ```
@@ -126,7 +126,7 @@ df_result = main(scenario_name,
 - 커버리지: 대한민국 전역 내륙 지역
 
 ### 주요 컬럼
-- **행정구역**: SIDO_NM, SIGUNGU_NM, ADM_NM
+- **행정구역**: SIDO_CD, SIDO_NM, SIGUNGU_CD, SIGUNGU_NM, ADM_CD, ADM_NM
 - **지리정보**: inland_area (면적 m²), dist (계통거리)
 - **태양광 자원**: 일사량(kWh/m²/day)
 - **토지이용**: 산지, 하천, 건물, 주택 면적
@@ -145,7 +145,7 @@ df_result = main(scenario_name,
 
 ### 시나리오 분석
 다양한 배제 시나리오 기반 시장잠재량 산출:
-- 배제21종, 24종, 28종, 29종
+- 배제21종, 24종, 28종(선택), 29종
 - 영농지 S1~S4 시나리오
 
 ### 출력 결과
