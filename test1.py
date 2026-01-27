@@ -474,15 +474,17 @@ def summarize_sigungu_by_sido(df, selected_sido):
 def main(scenario_name: str,
          print_summary: bool = False,
          create_viz: bool = False,
+         create_map_viz: bool = False,
          summarize_area: bool = False,
          return_lcoe: bool = False) -> pd.DataFrame:
     """
     메인 실행 함수 (건물벽면 포함)
 
     scenario_name: 실행할 시나리오의 컬럼명.
-    print_summary: 시장잠재량 결과 요약 출력 여부. (6번)
-    create_viz: 건물벽면 시각화 생성 여부. (7번)
-    summarize_area: 시도/시군구별 집계 실행 여부. (8번)
+    print_summary: 시장잠재량 결과 요약 출력 여부. (7번)
+    create_viz: 건물벽면 시각화 생성 여부. (8번)
+    create_map_viz: 지도 시각화 생성 및 3. Image 폴더 저장 여부. (8-1번)
+    summarize_area: 시도/시군구별 집계 실행 여부. (9번)
     return_lcoe: LCOE 컬럼 포함한 전체 데이터 반환 여부. (기본값: False, 시장잠재량만 반환)
     """
     global parameter_dict, df_lcoe, smp_rec_values
@@ -718,8 +720,19 @@ def main(scenario_name: str,
         create_histogram(df, 'CapacityFactor_건물벽면', '건물벽면 태양광 이용률 분포', '이용률')
         # 벽면면적-일사량 관계 그래프
         plot_wall_area_vs_irradiance(df)
-        
-    
+
+    # 8-1. 지도 시각화 (Conditional)
+    # visualiztion 모듈의 create_map_visualizations 함수 사용
+    if create_map_viz:
+        print("\n# 8-1. 지도 시각화 생성 중...")
+        from visualization import create_map_visualizations
+        create_map_visualizations(
+            df=df_result,
+            grid_shp_path="1. Raw Data/격자b_SGIS내륙정보.shp",
+            raw_data_folder="1. Raw Data",
+            output_base_folder="3. Image"
+        )
+
     # 9. 지역별 집계 (Conditional)
     sido_summary = None
     sigungu_summary = None
@@ -753,13 +766,14 @@ def main(scenario_name: str,
 
     
     # 지역별 집계 결과 저장 (집계가 실행된 경우에만)
+    # 시나리오명에서 'calc_reject_' 제거하여 파일명에 사용
+    scenario_short = scenario_name.replace('calc_reject_', '')
+
     if sido_summary is not None:
-        save_result_csv(sido_summary, "시도별_집계결과_건물벽면포함.csv")
-        # print(f"[CSV 저장 완료] 시도별_집계결과_건물벽면포함.csv") # 이 줄도 삭제
-        
+        save_result_csv(sido_summary, f"시도별_집계결과_{scenario_short}_건물벽면포함.csv")
+
     if sigungu_summary is not None:
-        save_result_csv(sigungu_summary, "시군구별_집계결과_건물벽면포함.csv")
-        # print(f"[CSV 저장 완료] 시군구별_집계결과_건물벽면포함.csv") # 이 줄도 삭제
+        save_result_csv(sigungu_summary, f"시군구별_집계결과_{scenario_short}_건물벽면포함.csv")
     
     
     end_time = time.time()
@@ -778,11 +792,11 @@ def main(scenario_name: str,
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
-# scenario_name = 'calc_reject_배제29종(실조례안)'
-scenario_name = 'calc_reject_영농지_S1'
+scenario_name = 'calc_reject_배제29종(실조례안)'
+# scenario_name = 'calc_reject_영농지_S1'
 
 # df_result = main(scenario_name)  # main 함수 실행
-df_result = main(scenario_name, print_summary=True, summarize_area=True)   #create_viz=True, 8번
+df_result = main(scenario_name, print_summary=True, create_viz=True, create_map_viz=True,summarize_area=True)
 print(df_result.head()) # 결과 DataFrame 확인
 
 # 별도 확인용
