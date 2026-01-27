@@ -245,13 +245,14 @@ def plot_wall_area_vs_irradiance(df):
     plt.show()
 
 # ======= 기존 함수들 (수정됨) =======
-def print_market_potential_summary(df):
+def print_market_potential_summary(df, return_df=False):
     """
     시장잠재량 발전량 및 설비용량 요약을 출력하는 함수 (건물벽면 추가)
+    return_df=True 시 DataFrame으로도 반환
     """
     category_mapping = {
         '시장잠재량_건물지붕': ['시장잠재량_건물지붕_발전량(TWh/년)', '시장잠재량_건물지붕_설비용량(GW)'],
-        '시장잠재량_건물벽면': ['시장잠재량_건물벽면_발전량(TWh/년)', '시장잠재량_건물벽면_설비용량(GW)'],  # 새로 추가
+        '시장잠재량_건물벽면': ['시장잠재량_건물벽면_발전량(TWh/년)', '시장잠재량_건물벽면_설비용량(GW)'],
         '시장잠재량_수상형': ['시장잠재량_수상형_발전량(TWh/년)', '시장잠재량_수상형_설비용량(GW)'],
         '시장잠재량_영농형_20년': ['시장잠재량_영농형_20년_발전량(TWh/년)', '시장잠재량_영농형_20년_설비용량(GW)'],
         '시장잠재량_영농형_20년_고정가계약': ['시장잠재량_영농형_20년_발전량(TWh/년)_고정가계약', '시장잠재량_영농형_20년_설비용량(GW)_고정가계약'],
@@ -267,14 +268,30 @@ def print_market_potential_summary(df):
         '시장잠재량_영농형_건물지붕' :['시장잠재량_건물지붕_영농형_발전량(TWh/년)', '시장잠재량_건물지붕_영농형_설비용량(GW)']
     }
 
+    # DataFrame 결과 저장용
+    summary_data = []
+
     for category, columns in category_mapping.items():
-        if columns[0] in df.columns and columns[1] in df.columns:  # 컬럼 존재 확인
+        if columns[0] in df.columns and columns[1] in df.columns:
             발전량 = df[columns[0]].sum()
             설비용량 = df[columns[1]].sum()
-            
-            print(f"\n※ {category}")
-            print(f"- 발전량(TWh/년): {발전량:.4f}")
-            print(f"- 설비용량(GW): {설비용량:.4f}")
+            summary_data.append({
+                '구분': category,
+                '발전량(TWh/년)': round(발전량, 4),
+                '설비용량(GW)': round(설비용량, 4)
+            })
+
+    summary_df = pd.DataFrame(summary_data)
+
+    if return_df:
+        return summary_df
+    else:
+        print("\n" + "=" * 60)
+        print("시장잠재량 요약 (전국 합계)")
+        print("=" * 60)
+        print(summary_df.to_string(index=False))
+        print("=" * 60)
+        return summary_df
 
 
 #여기서 시나리오 맞춰서 지정이 되는거잖아??
@@ -405,7 +422,7 @@ def run_scenario_with_facade(df_base, calcul_col, condition_col='cond_reject_배
         calculate_capacity(df_scenario, [result_col])
 
     # ▣ 결과 컬럼 필터링
-    id_cols = ['id', 'SIDO_NM', 'SIGUNGU_NM', 'ADM_NM']
+    id_cols = ['id', 'SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD', 'ADM_NM']
     result_cols = id_cols + [col for col in df_scenario.columns if '시장잠재량' in col]
     return df_scenario[result_cols]
 
@@ -757,22 +774,20 @@ def main(scenario_name: str,
         # 기본: 시장잠재량 결과만 반환
         return df_result
     
-
-
 #%%
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
 # scenario_name = 'calc_reject_배제29종(실조례안)'
-scenario_name = 'calc_reject_영농지_S2'
-df_result = main(scenario_name)  # main 함수 실행
+scenario_name = 'calc_reject_영농지_S1'
+
+# df_result = main(scenario_name)  # main 함수 실행
+df_result = main(scenario_name, print_summary=True, summarize_area=True)   #create_viz=True, 8번
 print(df_result.head()) # 결과 DataFrame 확인
 
-
-
-#sigungu CD, ADM CD
-#아웃풋에 현재시간 추가
-#LCOE 추출용 인자설정 또는 함수개발
+# 별도 확인용
+# summary_df = print_market_potential_summary(df_result, return_df=True)
+# summary_df
 
 
 
