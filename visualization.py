@@ -161,13 +161,19 @@ def plot_1km_grid(df_3857, target_col, boundary_sigungu, output_folder):
         column=target_col,
         ax=ax,
         cmap='YlOrRd',
+        alpha=0.6,
+        scheme='quantiles',
+        k=20,
         legend=True,
         legend_kwds={
-            'label': target_col,
-            'orientation': 'vertical',
-            'shrink': 0.7
+            'loc': 'lower right',
+            'fontsize': 8
         },
-        missing_kwds={'color': 'lightgrey'}
+        missing_kwds={
+            'color': '#ffffff',
+            'edgecolor': None,
+            'label': '결측값'
+        }
     )
 
     boundary_sigungu.boundary.plot(ax=ax, color='lightgrey', linewidth=0.5)
@@ -198,13 +204,20 @@ def plot_sido_map(sido_map, target_col, output_folder):
         column=target_col,
         ax=ax,
         cmap='YlOrRd',
+        alpha=0.6,
+        scheme='quantiles',
+        k=20,
         edgecolor='white',
         linewidth=0.5,
         legend=True,
         legend_kwds={
-            'label': target_col,
-            'orientation': 'vertical',
-            'shrink': 0.7
+            'loc': 'lower right',
+            'fontsize': 8
+        },
+        missing_kwds={
+            'color': '#ffffff',
+            'edgecolor': None,
+            'label': '결측값'
         }
     )
 
@@ -234,13 +247,20 @@ def plot_sigungu_map(sigungu_map, target_col, output_folder):
         column=target_col,
         ax=ax,
         cmap='YlOrRd',
+        alpha=0.6,
+        scheme='quantiles',
+        k=20,
         edgecolor='white',
         linewidth=0.3,
         legend=True,
         legend_kwds={
-            'label': target_col,
-            'orientation': 'vertical',
-            'shrink': 0.7
+            'loc': 'lower right',
+            'fontsize': 8
+        },
+        missing_kwds={
+            'color': '#ffffff',
+            'edgecolor': None,
+            'label': '결측값'
         }
     )
 
@@ -270,13 +290,20 @@ def plot_dong_map(dong_map, target_col, output_folder):
         column=target_col,
         ax=ax,
         cmap='YlOrRd',
+        alpha=0.6,
+        scheme='quantiles',
+        k=20,
         edgecolor='white',
         linewidth=0.1,
         legend=True,
         legend_kwds={
-            'label': target_col,
-            'orientation': 'vertical',
-            'shrink': 0.7
+            'loc': 'lower right',
+            'fontsize': 8
+        },
+        missing_kwds={
+            'color': '#ffffff',
+            'edgecolor': None,
+            'label': '결측값'
         }
     )
 
