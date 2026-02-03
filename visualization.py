@@ -43,17 +43,17 @@ def load_spatial_data(grid_shp_path, raw_data_folder="1. Raw Data"):
 
     # 시군구 경계
     boundary_sigungu = gpd.read_file(
-        os.path.join(raw_data_folder, 'bnd_sigungu_00_2023_2Q.shp')
+        os.path.join(raw_data_folder, 'bnd_sigungu_00_2024_2Q.gpkg')
     ).to_crs(epsg=32652)
 
     # 시도 경계
     boundary_sido = gpd.read_file(
-        os.path.join(raw_data_folder, 'bnd_sido_00_2023_2Q.shp')
+        os.path.join(raw_data_folder, 'bnd_sido_00_2024_2Q.gpkg')
     ).to_crs(epsg=32652)
 
     # 동 경계
     boundary_dong = gpd.read_file(
-        os.path.join(raw_data_folder, 'bnd_dong_00_2023_2Q.shp')
+        os.path.join(raw_data_folder, 'bnd_dong_00_2024_2Q.gpkg')
     ).to_crs(epsg=32652)
 
     # 1km 격자 데이터 (gpkg)
