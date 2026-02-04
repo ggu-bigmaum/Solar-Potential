@@ -207,7 +207,7 @@ def prepare_visualization_data(df, spatial_data):
 # =============================================================================
 
 def plot_1km_grid(grid_1km_map, target_col, boundary_sigungu, output_folder, k=10):
-    """1km 격자 단위 시각화 (최적화 버전 - pandas qcut 사용, NaN은 흰색)"""
+    """1km 격자 단위 시각화 (등분 방식, NaN은 흰색)"""
     from matplotlib.patches import Patch
 
     gdf = grid_1km_map.copy()
@@ -221,34 +221,48 @@ def plot_1km_grid(grid_1km_map, target_col, boundary_sigungu, output_folder, k=1
     fig, ax = plt.subplots(figsize=(12, 10))
 
     if valid_count > 0:
-        # 유효값만으로 분위수 계산
+        # 유효값의 최소/최대로 등분 계산
         valid_mask = gdf[target_col].notna()
         valid_values = gdf.loc[valid_mask, target_col]
-        _, bins = pd.qcut(valid_values, q=k, labels=False, duplicates='drop', retbins=True)
-        actual_k = len(bins) - 1  # bins 개수 기준
+        vmin, vmax = valid_values.min(), valid_values.max()
 
-        # 전체 데이터에 분위수 클래스 할당
-        gdf['_quantile_class'] = pd.cut(
-            gdf[target_col], bins=bins, labels=False, include_lowest=True
-        )
+        # vmin == vmax인 경우 (모든 값이 동일) 처리
+        if vmin == vmax:
+            # 단일 값: 모두 같은 색상으로 표시
+            colors = np.ones((len(gdf), 4))  # 기본 흰색
+            colors[valid_mask.values] = cmap(0.5)  # 유효값은 중간 색상
+            gdf.plot(ax=ax, color=colors, linewidth=0, rasterized=True)
+            legend_patches = [
+                Patch(facecolor=cmap(0.5), label=f'{vmin:.4f} (단일값)'),
+                Patch(facecolor='white', edgecolor='gray', label='결측값')
+            ]
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+        else:
+            bins = np.linspace(vmin, vmax, k + 1)
+            actual_k = k
 
-        # 색상 매핑: NaN은 흰색, 유효값은 colormap (RGBA 배열)
-        colors = np.ones((len(gdf), 4))  # 기본값 흰색 (1,1,1,1)
-        for i in range(actual_k):
-            mask = (gdf['_quantile_class'] == i).values
-            colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
+            # 전체 데이터에 등분 클래스 할당
+            gdf['_class'] = pd.cut(
+                gdf[target_col], bins=bins, labels=False, include_lowest=True
+            )
 
-        # 시각화
-        gdf.plot(ax=ax, color=colors, linewidth=0, rasterized=True)
+            # 색상 매핑: NaN은 흰색, 유효값은 colormap (RGBA 배열)
+            colors = np.ones((len(gdf), 4))  # 기본값 흰색 (1,1,1,1)
+            for i in range(actual_k):
+                mask = (gdf['_class'] == i).values
+                colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
 
-        # 범례
-        legend_patches = [
-            Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
-                  label=f'{bins[i]:.2f} ~ {bins[i+1]:.2f}')
-            for i in range(actual_k)
-        ]
-        legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
-        ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+            # 시각화
+            gdf.plot(ax=ax, color=colors, linewidth=0, rasterized=True)
+
+            # 범례
+            legend_patches = [
+                Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
+                      label=f'{bins[i]:.4f}  ~  {bins[i+1]:.4f}')
+                for i in range(actual_k)
+            ]
+            legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
     else:
         # 유효 데이터 없음 - 모두 흰색
         gdf.plot(ax=ax, color='white', edgecolor='lightgrey', linewidth=0.1, rasterized=True)
@@ -271,7 +285,7 @@ def plot_1km_grid(grid_1km_map, target_col, boundary_sigungu, output_folder, k=1
 
 
 def plot_sido_map(sido_map, target_col, output_folder, k=10):
-    """시도별 합계 시각화 (분위수 범례, NaN은 흰색)"""
+    """시도별 합계 시각화 (등분 범례, NaN은 흰색)"""
     from matplotlib.patches import Patch
 
     gdf = sido_map.copy()
@@ -281,32 +295,46 @@ def plot_sido_map(sido_map, target_col, output_folder, k=10):
     fig, ax = plt.subplots(figsize=(8, 8))
 
     if valid_count > 0:
-        # 유효값만으로 분위수 계산
+        # 유효값의 최소/최대로 등분 계산
         valid_values = gdf.loc[gdf[target_col].notna(), target_col]
-        _, bins = pd.qcut(valid_values, q=k, labels=False, duplicates='drop', retbins=True)
-        actual_k = len(bins) - 1  # bins 개수 기준
+        valid_mask = gdf[target_col].notna()
+        vmin, vmax = valid_values.min(), valid_values.max()
 
-        # 전체 데이터에 분위수 클래스 할당
-        gdf['_quantile_class'] = pd.cut(
-            gdf[target_col], bins=bins, labels=False, include_lowest=True
-        )
+        # vmin == vmax인 경우 (모든 값이 동일) 처리
+        if vmin == vmax:
+            colors = np.ones((len(gdf), 4))
+            colors[valid_mask.values] = cmap(0.5)
+            gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.5)
+            legend_patches = [
+                Patch(facecolor=cmap(0.5), label=f'{vmin:.4f} (단일값)'),
+                Patch(facecolor='white', edgecolor='gray', label='결측값')
+            ]
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+        else:
+            bins = np.linspace(vmin, vmax, k + 1)
+            actual_k = k
 
-        # 색상 매핑
-        colors = np.ones((len(gdf), 4))
-        for i in range(actual_k):
-            mask = (gdf['_quantile_class'] == i).values
-            colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
+            # 전체 데이터에 등분 클래스 할당
+            gdf['_class'] = pd.cut(
+                gdf[target_col], bins=bins, labels=False, include_lowest=True
+            )
 
-        gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.5)
+            # 색상 매핑
+            colors = np.ones((len(gdf), 4))
+            for i in range(actual_k):
+                mask = (gdf['_class'] == i).values
+                colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
 
-        # 범례
-        legend_patches = [
-            Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
-                  label=f'{bins[i]:.2f} ~ {bins[i+1]:.2f}')
-            for i in range(actual_k)
-        ]
-        legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
-        ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+            gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.5)
+
+            # 범례
+            legend_patches = [
+                Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
+                      label=f'{bins[i]:.4f}  ~  {bins[i+1]:.4f}')
+                for i in range(actual_k)
+            ]
+            legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
     else:
         gdf.plot(ax=ax, color='white', edgecolor='lightgrey', linewidth=0.5)
         ax.legend(handles=[Patch(facecolor='white', edgecolor='gray', label='결측값')],
@@ -326,7 +354,7 @@ def plot_sido_map(sido_map, target_col, output_folder, k=10):
 
 
 def plot_sigungu_map(sigungu_map, target_col, output_folder, k=10):
-    """시군구별 합계 시각화 (분위수 범례, NaN은 흰색)"""
+    """시군구별 합계 시각화 (등분 범례, NaN은 흰색)"""
     from matplotlib.patches import Patch
 
     gdf = sigungu_map.copy()
@@ -336,32 +364,46 @@ def plot_sigungu_map(sigungu_map, target_col, output_folder, k=10):
     fig, ax = plt.subplots(figsize=(10, 10))
 
     if valid_count > 0:
-        # 유효값만으로 분위수 계산
+        # 유효값의 최소/최대로 등분 계산
         valid_values = gdf.loc[gdf[target_col].notna(), target_col]
-        _, bins = pd.qcut(valid_values, q=k, labels=False, duplicates='drop', retbins=True)
-        actual_k = len(bins) - 1  # bins 개수 기준
+        valid_mask = gdf[target_col].notna()
+        vmin, vmax = valid_values.min(), valid_values.max()
 
-        # 전체 데이터에 분위수 클래스 할당
-        gdf['_quantile_class'] = pd.cut(
-            gdf[target_col], bins=bins, labels=False, include_lowest=True
-        )
+        # vmin == vmax인 경우 (모든 값이 동일) 처리
+        if vmin == vmax:
+            colors = np.ones((len(gdf), 4))
+            colors[valid_mask.values] = cmap(0.5)
+            gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.3)
+            legend_patches = [
+                Patch(facecolor=cmap(0.5), label=f'{vmin:.4f} (단일값)'),
+                Patch(facecolor='white', edgecolor='gray', label='결측값')
+            ]
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+        else:
+            bins = np.linspace(vmin, vmax, k + 1)
+            actual_k = k
 
-        # 색상 매핑
-        colors = np.ones((len(gdf), 4))
-        for i in range(actual_k):
-            mask = (gdf['_quantile_class'] == i).values
-            colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
+            # 전체 데이터에 등분 클래스 할당
+            gdf['_class'] = pd.cut(
+                gdf[target_col], bins=bins, labels=False, include_lowest=True
+            )
 
-        gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.3)
+            # 색상 매핑
+            colors = np.ones((len(gdf), 4))
+            for i in range(actual_k):
+                mask = (gdf['_class'] == i).values
+                colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
 
-        # 범례
-        legend_patches = [
-            Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
-                  label=f'{bins[i]:.2f} ~ {bins[i+1]:.2f}')
-            for i in range(actual_k)
-        ]
-        legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
-        ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+            gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.3)
+
+            # 범례
+            legend_patches = [
+                Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
+                      label=f'{bins[i]:.4f}  ~  {bins[i+1]:.4f}')
+                for i in range(actual_k)
+            ]
+            legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
     else:
         gdf.plot(ax=ax, color='white', edgecolor='lightgrey', linewidth=0.3)
         ax.legend(handles=[Patch(facecolor='white', edgecolor='gray', label='결측값')],
@@ -381,7 +423,7 @@ def plot_sigungu_map(sigungu_map, target_col, output_folder, k=10):
 
 
 def plot_dong_map(dong_map, target_col, output_folder, k=10):
-    """동별 합계 시각화 (분위수 범례, NaN은 흰색)"""
+    """동별 합계 시각화 (등분 범례, NaN은 흰색)"""
     from matplotlib.patches import Patch
 
     gdf = dong_map.copy()
@@ -391,34 +433,48 @@ def plot_dong_map(dong_map, target_col, output_folder, k=10):
     fig, ax = plt.subplots(figsize=(12, 10))
 
     if valid_count > 0:
-        # 유효값만으로 분위수 계산
+        # 유효값의 최소/최대로 등분 계산
         valid_values = gdf.loc[gdf[target_col].notna(), target_col]
-        _, bins = pd.qcut(valid_values, q=k, labels=False, duplicates='drop', retbins=True)
-        actual_k = len(bins) - 1  # bins 개수 기준
+        valid_mask = gdf[target_col].notna()
+        vmin, vmax = valid_values.min(), valid_values.max()
 
-        # 전체 데이터에 분위수 클래스 할당
-        gdf['_quantile_class'] = pd.cut(
-            gdf[target_col], bins=bins, labels=False, include_lowest=True
-        )
+        # vmin == vmax인 경우 (모든 값이 동일) 처리
+        if vmin == vmax:
+            colors = np.ones((len(gdf), 4))
+            colors[valid_mask.values] = cmap(0.5)
+            gdf.plot(ax=ax, color=colors, edgecolor='gray', linewidth=0.1)
+            legend_patches = [
+                Patch(facecolor=cmap(0.5), label=f'{vmin:.4f} (단일값)'),
+                Patch(facecolor='white', edgecolor='gray', label='결측값')
+            ]
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+        else:
+            bins = np.linspace(vmin, vmax, k + 1)
+            actual_k = k
 
-        # 색상 매핑
-        colors = np.ones((len(gdf), 4))
-        for i in range(actual_k):
-            mask = (gdf['_quantile_class'] == i).values
-            colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
+            # 전체 데이터에 등분 클래스 할당
+            gdf['_class'] = pd.cut(
+                gdf[target_col], bins=bins, labels=False, include_lowest=True
+            )
 
-        gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.1)
+            # 색상 매핑
+            colors = np.ones((len(gdf), 4))
+            for i in range(actual_k):
+                mask = (gdf['_class'] == i).values
+                colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
 
-        # 범례
-        legend_patches = [
-            Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
-                  label=f'{bins[i]:.2f} ~ {bins[i+1]:.2f}')
-            for i in range(actual_k)
-        ]
-        legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
-        ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
+            gdf.plot(ax=ax, color=colors, edgecolor='gray', linewidth=0.1)
+
+            # 범례
+            legend_patches = [
+                Patch(facecolor=cmap(i / (actual_k - 1) if actual_k > 1 else 0),
+                      label=f'{bins[i]:.4f}  ~  {bins[i+1]:.4f}')
+                for i in range(actual_k)
+            ]
+            legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
+            ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
     else:
-        gdf.plot(ax=ax, color='white', edgecolor='lightgrey', linewidth=0.1)
+        gdf.plot(ax=ax, color='white', edgecolor='gray', linewidth=0.1)
         ax.legend(handles=[Patch(facecolor='white', edgecolor='gray', label='결측값')],
                   loc='lower right', fontsize=8)
 
@@ -444,7 +500,8 @@ def create_map_visualizations(
     grid_shp_path="1. Raw Data/격자b_SGIS내륙정보.shp",
     raw_data_folder="1. Raw Data",
     output_base_folder="3. Image",
-    viz_types=None
+    viz_types=None,
+    test_mode=False  # 테스트 모드: 각 유형별 1개만 생성
 ):
     """
     전체 지도 시각화 실행 및 이미지 저장
@@ -456,16 +513,17 @@ def create_map_visualizations(
         output_base_folder: 이미지 저장 기본 폴더 (기본값: "3. Image")
         viz_types: 시각화 유형 리스트 (기본값: 전체)
                    ['1km격자', '시도별', '시군구별', '동별'] 중 선택
+        test_mode: True이면 각 유형별 첫 번째 컬럼만 시각화 (기본값: False)
 
     Returns:
         dict: 각 시각화 유형별 저장된 파일 경로 리스트
     """
-    
+
     if viz_types is None:
         viz_types = ['1km격자', '시도별', '시군구별', '동별']
 
     print("\n" + "="*60)
-    print("지도 시각화 시작")
+    print("지도 시각화 시작" + (" [테스트 모드]" if test_mode else ""))
     print("="*60)
 
     total_start = time.time()
@@ -477,6 +535,12 @@ def create_map_visualizations(
     viz_data = prepare_visualization_data(df, spatial_data)
 
     capacity_cols = viz_data['capacity_cols']
+
+    # 테스트 모드: 첫 번째 컬럼만 사용
+    if test_mode:
+        capacity_cols = capacity_cols[:1]
+        print(f"  [테스트 모드] 대상 컬럼: {capacity_cols}")
+
     results = {}
 
     # 3. 1km 격자 시각화
