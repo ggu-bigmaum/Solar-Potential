@@ -508,7 +508,7 @@ def main(scenario_name: str,
     ##  ***
     ##  ***
     
-    df = pd.read_csv('data_merge__202602051548.csv', low_memory=False, encoding = 'euc-kr')
+    df = pd.read_csv('data_merge__202602051631.csv', low_memory=False, encoding = 'euc-kr')
     
     ## ***
     ## ***
@@ -805,7 +805,7 @@ def main(scenario_name: str,
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
-scenario_name = 'calc_reject_Solar_S1'
+scenario_name = 'calc_reject_Solar_S3'
 # scenario_name = 'calc_reject_영농지_S1'
 
 # df_result = main(scenario_name)  # main 함수 실행
@@ -817,7 +817,7 @@ df_result = main(scenario_name, print_summary=True)
     # summarize_area: 시도/시군구별/동별 집계 실행 여부. (9번)
 print(df_result.head()) # 결과 DataFrame 확인
 
-# 별도 확인용
+# 7번 출력 별도 확인용
 # summary_df = print_market_potential_summary(df_result, return_df=True)
 # summary_df
 
