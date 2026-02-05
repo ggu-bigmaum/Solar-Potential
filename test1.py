@@ -286,11 +286,13 @@ def print_market_potential_summary(df, return_df=False):
     if return_df:
         return summary_df
     else:
-        print("\n" + "=" * 60)
-        print("시장잠재량 요약 (전국 합계)")
-        print("=" * 60)
-        print(summary_df.to_string(index=False))
-        print("=" * 60)
+        # 전체 출력을 위한 pandas 옵션 설정
+        with pd.option_context('display.max_rows', None, 'display.width', None):
+            print("\n" + "=" * 60)
+            print("시장잠재량 요약 (전국 합계)")
+            print("=" * 60)
+            print(summary_df.to_string(index=False))
+            print("=" * 60)
         return summary_df
 
 
@@ -506,7 +508,7 @@ def main(scenario_name: str,
     ##  ***
     ##  ***
     
-    df = pd.read_csv('data_merge__202601211146.csv', low_memory=False)
+    df = pd.read_csv('data_merge__202602051548.csv', low_memory=False, encoding = 'euc-kr')
     
     ## ***
     ## ***
@@ -803,11 +805,11 @@ def main(scenario_name: str,
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
-scenario_name = 'calc_reject_배제29종(실조례안)'
+scenario_name = 'calc_reject_Solar_S1'
 # scenario_name = 'calc_reject_영농지_S1'
 
 # df_result = main(scenario_name)  # main 함수 실행
-df_result = main(scenario_name, create_map_viz=True)
+df_result = main(scenario_name, print_summary=True)
 # df_result = main(scenario_name, print_summary=True, create_viz=True, create_map_viz=True,summarize_area=True)
     # print_summary: 시장잠재량 결과 요약 출력 여부. (7번)
     # create_viz: 건물벽면 시각화 생성 여부. (8번)
