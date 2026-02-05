@@ -201,7 +201,7 @@ df.columns = ['id', '산지_Area_(m2)', '하천호소저수지_Area(m2)', '주�
 
 
 
-df.to_csv('data_merge_except_exclusion.csv', encoding = 'utf-8')
+df.to_csv('data_merge_except_exclusion.csv', encoding = 'euc-kr')
 # 배제요인 제외하고 csv파일로 1차 저장
 print("=" * 50)
 print("병합 데이터 저장 완료")
@@ -215,7 +215,7 @@ print(f"\n 총 소요 시간: {elapsed_time:.4f}초")
 start_time = time.time()
 
 # 병합 대상 데이터 불러오기
-df_merged = pd.read_csv('data_merge_except_exclusion.csv', encoding='utf-8', low_memory=False)
+df_merged = pd.read_csv('data_merge_except_exclusion.csv', encoding='euc-kr', low_memory=False)
 
 # Unnamed 컬럼 제거 및 ID 정리
 df_merged = df_merged.loc[:, ~df_merged.columns.str.contains('^Unnamed')]
@@ -226,6 +226,7 @@ df_merged['id'] = df_merged['id'].round().astype(int)
 # 배제 파일 목록
 cond_reject = ['배제21종', '배제24종']  #조건에 해당하는
 calc_reject = ['배제28종(1-26+6m폭도로100m버퍼+철도)'
+              ,'Solar_S1', 'Solar_S2', 'Soalar_S3','Solar_S4'
               ,'영농지_S1','영농지_S2','영농지_S3','영농지_S4'
               , '배제29종(실조례안)']
 
@@ -281,7 +282,7 @@ print(f"\n병합 소요 시간: {elapsed_time:.2f}초")
 
 # 저장
 timestamp = datetime.now().strftime('%Y%m%d%H%M')
-df_merged.to_csv(f'data_merge__{timestamp}.csv', encoding='utf-8', index=False)
+df_merged.to_csv(f'data_merge__{timestamp}.csv', encoding='euc-kr', index=False)
 
 # 소요 시간 출력
 elapsed_time = time.time() - start_time
@@ -290,3 +291,5 @@ print(f"\n총 소요 시간: {elapsed_time:.2f}초")
 #%%
 # 최종 컬럼 리스트 확인
 print(df_merged.columns.to_list())
+
+# %%
