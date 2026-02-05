@@ -41,12 +41,12 @@ def load_spatial_data(grid_shp_path, raw_data_folder="1. Raw Data"):
     gdf = gpd.read_file(grid_shp_path)[['id', 'geometry']]
     gdf = gdf.to_crs(epsg=32652)
 
-    # 시군구 경계
+    # 시군구 경계 (2024년 2분기 기준 252개)
     boundary_sigungu = gpd.read_file(
         os.path.join(raw_data_folder, 'bnd_sigungu_00_2024_2Q.gpkg')
     ).to_crs(epsg=32652)
 
-    # 시도 경계
+    # 시도 경계 (17개)
     boundary_sido = gpd.read_file(
         os.path.join(raw_data_folder, 'bnd_sido_00_2024_2Q.gpkg')
     ).to_crs(epsg=32652)
@@ -373,7 +373,7 @@ def plot_sigungu_map(sigungu_map, target_col, output_folder, k=10):
         if vmin == vmax:
             colors = np.ones((len(gdf), 4))
             colors[valid_mask.values] = cmap(0.5)
-            gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.3)
+            gdf.plot(ax=ax, color=colors, edgecolor='gray', linewidth=0.3)
             legend_patches = [
                 Patch(facecolor=cmap(0.5), label=f'{vmin:.4f} (단일값)'),
                 Patch(facecolor='white', edgecolor='gray', label='결측값')
@@ -394,7 +394,7 @@ def plot_sigungu_map(sigungu_map, target_col, output_folder, k=10):
                 mask = (gdf['_class'] == i).values
                 colors[mask] = cmap(i / (actual_k - 1) if actual_k > 1 else 0)
 
-            gdf.plot(ax=ax, color=colors, edgecolor='white', linewidth=0.3)
+            gdf.plot(ax=ax, color=colors, edgecolor='gray', linewidth=0.3)
 
             # 범례
             legend_patches = [
@@ -405,7 +405,7 @@ def plot_sigungu_map(sigungu_map, target_col, output_folder, k=10):
             legend_patches.append(Patch(facecolor='white', edgecolor='gray', label='결측값'))
             ax.legend(handles=legend_patches, loc='lower right', fontsize=8)
     else:
-        gdf.plot(ax=ax, color='white', edgecolor='lightgrey', linewidth=0.3)
+        gdf.plot(ax=ax, color='white', edgecolor='gray', linewidth=0.3)
         ax.legend(handles=[Patch(facecolor='white', edgecolor='gray', label='결측값')],
                   loc='lower right', fontsize=8)
 
