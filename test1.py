@@ -346,25 +346,25 @@ def run_scenario_with_facade(df_base, calcul_col, condition_col='cond_reject_배
     )
 
     # ▣ 영농형 발전량 (공통 함수 활용)
-    df_scenario['시장잠재량_영농형_20년_발전량(TWh/년)'] = calculate_potential_sample(
-        df_scenario, 'LCOE_영농형_20년(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
+    df_scenario['시장잠재량_영농형_20년_발전량(TWh/년)'] = calculate_potential(
+        df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
         smp_rec_values['토지'], parameter_dict['태양광_영농형_20년_면적비율']
-    )
+    ) * df_scenario['weight_영농형']
 
     df_scenario['시장잠재량_영농형_20년_발전량(TWh/년)_고정가계약'] = calculate_potential(
-        df_scenario, 'LCOE_영농형_20년(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
+        df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
         smp_rec_values['토지_고정가계약'], parameter_dict['태양광_영농형_20년_면적비율']
-    )
+    ) * df_scenario['weight_영농형']
 
-    df_scenario['시장잠재량_영농형_8년_발전량(TWh/년)'] = calculate_potential_sample(
-        df_scenario, 'LCOE_영농형_8년(원/kWh)', 'LCOE_영농형_8년(원/kWh)',
+    df_scenario['시장잠재량_영농형_8년_발전량(TWh/년)'] = calculate_potential(
+        df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_8년(원/kWh)',
         smp_rec_values['토지'], parameter_dict['태양광_영농형_8년_면적비율']
-    ) 
+    ) * df_scenario['weight_영농형']
 
-    df_scenario['시장잠재량_영농형_23년_발전량(TWh/년)'] = calculate_potential_sample(
+    df_scenario['시장잠재량_영농형_23년_발전량(TWh/년)'] = calculate_potential(
         df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_23년(원/kWh)',
         smp_rec_values['토지'], parameter_dict['태양광_영농형_20년_면적비율']
-    ) 
+    ) * df_scenario['weight_영농형'] 
 
     # ▣ 토지 발전량
     df_scenario['시장잠재량_토지_발전량(TWh/년)'] = calculate_potential(
@@ -833,6 +833,7 @@ def summarize_market_potential(df):
     """
     # 합계 계산
     sum_8_gw  = df['시장잠재량_영농형_8년_설비용량(GW)'].sum()
+
     sum_20_gw = df['시장잠재량_영농형_20년_설비용량(GW)'].sum()
     sum_23_gw = df['시장잠재량_영농형_23년_설비용량(GW)'].sum()
 
