@@ -286,11 +286,13 @@ def print_market_potential_summary(df, return_df=False):
     if return_df:
         return summary_df
     else:
-        print("\n" + "=" * 60)
-        print("시장잠재량 요약 (전국 합계)")
-        print("=" * 60)
-        print(summary_df.to_string(index=False))
-        print("=" * 60)
+        # 전체 출력을 위한 pandas 옵션 설정
+        with pd.option_context('display.max_rows', None, 'display.width', None):
+            print("\n" + "=" * 60)
+            print("시장잠재량 요약 (전국 합계)")
+            print("=" * 60)
+            print(summary_df.to_string(index=False))
+            print("=" * 60)
         return summary_df
 
 
@@ -344,25 +346,25 @@ def run_scenario_with_facade(df_base, calcul_col, condition_col='cond_reject_배
     )
 
     # ▣ 영농형 발전량 (공통 함수 활용)
-    df_scenario['시장잠재량_영농형_20년_발전량(TWh/년)'] = calculate_potential_sample(
-        df_scenario, 'LCOE_영농형_20년(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
+    df_scenario['시장잠재량_영농형_20년_발전량(TWh/년)'] = calculate_potential(
+        df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
         smp_rec_values['토지'], parameter_dict['태양광_영농형_20년_면적비율']
-    )
+    ) * df_scenario['weight_영농형']
 
     df_scenario['시장잠재량_영농형_20년_발전량(TWh/년)_고정가계약'] = calculate_potential(
-        df_scenario, 'LCOE_영농형_20년(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
+        df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_20년(원/kWh)',
         smp_rec_values['토지_고정가계약'], parameter_dict['태양광_영농형_20년_면적비율']
-    )
+    ) * df_scenario['weight_영농형']
 
-    df_scenario['시장잠재량_영농형_8년_발전량(TWh/년)'] = calculate_potential_sample(
-        df_scenario, 'LCOE_영농형_8년(원/kWh)', 'LCOE_영농형_8년(원/kWh)',
+    df_scenario['시장잠재량_영농형_8년_발전량(TWh/년)'] = calculate_potential(
+        df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_8년(원/kWh)',
         smp_rec_values['토지'], parameter_dict['태양광_영농형_8년_면적비율']
-    ) 
+    ) * df_scenario['weight_영농형']
 
-    df_scenario['시장잠재량_영농형_23년_발전량(TWh/년)'] = calculate_potential_sample(
+    df_scenario['시장잠재량_영농형_23년_발전량(TWh/년)'] = calculate_potential(
         df_scenario, 'LCOE_토지(원/kWh)', 'LCOE_영농형_23년(원/kWh)',
         smp_rec_values['토지'], parameter_dict['태양광_영농형_20년_면적비율']
-    ) 
+    ) * df_scenario['weight_영농형'] 
 
     # ▣ 토지 발전량
     df_scenario['시장잠재량_토지_발전량(TWh/년)'] = calculate_potential(
@@ -422,11 +424,11 @@ def run_scenario_with_facade(df_base, calcul_col, condition_col='cond_reject_배
         calculate_capacity(df_scenario, [result_col])
 
     # ▣ 결과 컬럼 필터링
-    id_cols = ['id', 'SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD', 'ADM_NM']
+    id_cols = ['id', 'SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD', 'ADM_NM', 'ADM_CD']
     result_cols = id_cols + [col for col in df_scenario.columns if '시장잠재량' in col]
     return df_scenario[result_cols]
 
-# 기존 함수들 (그대로 유지)
+# 기존 함수들 참조
 def safe_filename(text):
     text = text.replace(" ", "_")
     text = re.sub(r'[^\w가-힣]', '_', text)
@@ -452,6 +454,11 @@ def summarize_by_sido(df):
 def summarize_by_sigungu(df):
     columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
     result = df.groupby(['SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD'])[columns_to_sum].sum().reset_index()
+    return result
+
+def summarize_by_dong(df):
+    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
+    result = df.groupby(['SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD', 'ADM_NM', 'ADM_CD'])[columns_to_sum].sum().reset_index()
     return result
 
 def summarize_sigungu_by_sido(df, selected_sido):
@@ -501,7 +508,7 @@ def main(scenario_name: str,
     ##  ***
     ##  ***
     
-    df = pd.read_csv('data_merge__202601211146.csv', low_memory=False)
+    df = pd.read_csv('data_merge__202602051631.csv', low_memory=False, encoding = 'euc-kr')
     
     ## ***
     ## ***
@@ -723,6 +730,7 @@ def main(scenario_name: str,
 
     # 8-1. 지도 시각화 (Conditional)
     # visualiztion 모듈의 create_map_visualizations 함수 사용
+    # viz=types 는 None으로 설정해둔 상태(visualizion)
     if create_map_viz:
         print("\n# 8-1. 지도 시각화 생성 중...")
         from visualization import create_map_visualizations
@@ -736,12 +744,14 @@ def main(scenario_name: str,
     # 9. 지역별 집계 (Conditional)
     sido_summary = None
     sigungu_summary = None
+    dong_summary = None
     if summarize_area:
         print("\n# 9. 지역별 집계 중...")
         # 현재 시나리오 결과인 df_result를 사용하여 집계
         sido_summary = summarize_by_sido(df_result)
         sigungu_summary = summarize_by_sigungu(df_result)
-        print("지역별 집계 완료.")
+        dong_summary = summarize_by_dong(df_result)
+        print("지역별 집계 완료 (시도/시군구/동별).")
         
     
 # 10. 결과 저장 (CSV)
@@ -774,8 +784,11 @@ def main(scenario_name: str,
 
     if sigungu_summary is not None:
         save_result_csv(sigungu_summary, f"시군구별_집계결과_{scenario_short}_건물벽면포함.csv")
-    
-    
+
+    if dong_summary is not None:
+        save_result_csv(dong_summary, f"동별_집계결과_{scenario_short}_건물벽면포함.csv")
+
+
     end_time = time.time()
     print(f"총 소요 시간: {end_time - start_time:.2f}초")
     print("=== 시나리오 분석 완료! ===")
@@ -792,19 +805,19 @@ def main(scenario_name: str,
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
-scenario_name = 'calc_reject_배제29종(실조례안)'
+scenario_name = 'calc_reject_Solar_S3'
 # scenario_name = 'calc_reject_영농지_S1'
 
 # df_result = main(scenario_name)  # main 함수 실행
-# df_result = main(scenario_name, print_summary=True)
-df_result = main(scenario_name, print_summary=True, create_viz=True, create_map_viz=True,summarize_area=True)
+df_result = main(scenario_name, print_summary=True)
+# df_result = main(scenario_name, print_summary=True, create_viz=True, create_map_viz=True,summarize_area=True)
     # print_summary: 시장잠재량 결과 요약 출력 여부. (7번)
     # create_viz: 건물벽면 시각화 생성 여부. (8번)
     # create_map_viz: 지도 시각화 생성 및 3. Image 폴더 저장 여부. (8-1번)
-    # summarize_area: 시도/시군구별 집계 실행 여부. (9번)
+    # summarize_area: 시도/시군구별/동별 집계 실행 여부. (9번)
 print(df_result.head()) # 결과 DataFrame 확인
 
-# 별도 확인용
+# 7번 출력 별도 확인용
 # summary_df = print_market_potential_summary(df_result, return_df=True)
 # summary_df
 
@@ -820,6 +833,7 @@ def summarize_market_potential(df):
     """
     # 합계 계산
     sum_8_gw  = df['시장잠재량_영농형_8년_설비용량(GW)'].sum()
+
     sum_20_gw = df['시장잠재량_영농형_20년_설비용량(GW)'].sum()
     sum_23_gw = df['시장잠재량_영농형_23년_설비용량(GW)'].sum()
 

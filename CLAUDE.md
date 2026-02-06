@@ -46,12 +46,17 @@
 main(scenario_name: str,
      print_summary: bool = False,
      create_viz: bool = False,
+     create_map_viz: bool = False,
      summarize_area: bool = False,
      return_lcoe: bool = False) -> pd.DataFrame
 ```
 
 **매개변수**:
-- `scenario_name`: 배제 시나리오 컬럼명 (예: `'calc_reject_영농지_S1'`)
+- `scenario_name`: 배제 시나리오 컬럼명 (예: `'calc_reject_배제29종(실조례안)'`)
+- `print_summary`: 시장잠재량 결과 요약 출력 여부
+- `create_viz`: 건물벽면 시각화 생성 여부
+- `create_map_viz`: 지도 시각화 생성 및 `3. Image/` 폴더 저장 여부
+- `summarize_area`: 시도/시군구별 집계 실행 여부
 - `return_lcoe`: `True`면 LCOE 컬럼 포함 전체 DataFrame 반환, `False`(기본값)면 시장잠재량 컬럼만 반환
 
 **주요 함수**:
@@ -60,27 +65,71 @@ main(scenario_name: str,
 - `run_scenario_with_facade()`: 주어진 배제 시나리오에 대한 전체 분석 파이프라인 실행
 - `calculate_facade_*()`: 건물벽면 분석 함수군 (LCOE, 일사량, 이용률)
 
+### 시각화 모듈 (`visualization.py`)
+
+지도 시각화를 담당하는 별도 모듈:
+
+```python
+from visualization import create_map_visualizations
+
+create_map_visualizations(
+    df=df_result,
+    grid_shp_path="1. Raw Data/격자b_SGIS내륙정보.shp",
+    raw_data_folder="1. Raw Data",
+    output_base_folder="3. Image",
+    viz_types=['1km격자', '시도별', '시군구별', '동별'],
+    test_mode=False  # True면 각 유형별 1개만 생성
+)
+```
+
+**시각화 유형**:
+- `1km격자`: 1km 격자 단위 전국 분포도
+- `시도별`: 시도 단위 합계 choropleth
+- `시군구별`: 시군구 단위 합계 choropleth
+- `동별`: 읍면동 단위 합계 choropleth
+
+**범례 설정**:
+- 분류 방식: 등분 (Equal Interval) - 값 범위를 k등분
+- 소수점: 4자리 (예: `0.0000  ~  0.1234`)
+- 결측값: 흰색으로 표시
+
+**경계 파일** (2024년 2분기 기준):
+- `bnd_sido_00_2024_2Q.gpkg` - 시도 경계 (17개)
+- `bnd_sigungu_00_2024_2Q.gpkg` - 시군구 경계 (252개)
+- `bnd_dong_00_2024_2Q.gpkg` - 읍면동 경계
+- `a0000000a.gpkg` - 1km 격자 geometry
+- `id_key_202601291842.csv` - 100m-1km 격자 ID 매핑 테이블
+
+**참고:** 데이터(`격자b_SGIS내륙정보(2025).csv`)의 시군구 수는 230개로, 경계 파일(252개)과 차이가 있음. 부천시 등 행정구역 변경으로 인한 차이.
+
 ## 분석 실행
 
 ### 필수 요구사항
 `1. Raw Data/` 폴더에 필요한 파일:
 - `시장잠재량 Parameter_4.xlsx` - 경제성 파라미터 (가격, 요율, 비용)
-- 격자 데이터 파일 (격자b_SGIS내륙정보.csv 등)
-- 배제지역 파일 (배제21종, 배제24종, 배제28종 등)
+- `격자b_SGIS내륙정보(2025).csv` - 격자 데이터 (행정구역 정보 포함)
+- 배제지역 파일 (배제21종, 배제24종, 배제28종, 배제29종 등)
 - 건물/토지이용 데이터셋
+
+**시각화용 경계 파일** (gpkg 형식, 2024년 기준):
+- `bnd_sido_00_2024_2Q.gpkg`, `bnd_sigungu_00_2024_2Q.gpkg`, `bnd_dong_00_2024_2Q.gpkg`
+- `a0000000a.gpkg` - 1km 격자 geometry
+- `id_key_202601291842.csv` - 100m-1km ID 매핑
 
 ### 실행 패턴
 ```python
 # 기본 실행 - 시장잠재량 결과만 반환
-scenario_name = 'calc_reject_영농지_S1'
+scenario_name = 'calc_reject_배제29종(실조례안)'
 df_result = main(scenario_name)
 
-# LCOE 데이터 반환
-df_lcoe = main(scenario_name, return_lcoe=True)
+# 지도 시각화 포함 실행
+df_result = main(scenario_name, create_map_viz=True)
 
-# 요약 포함 전체 분석
+# 전체 옵션 실행
 df_result = main(scenario_name,
                  print_summary=True,
+                 create_viz=True,
+                 create_map_viz=True,
                  summarize_area=True)
 ```
 
@@ -123,7 +172,13 @@ df_result = main(scenario_name,
 
 ## 출력 구조
 
-`2. Output/` 폴더에 저장되는 결과:
+### `2. Output/` 폴더 (데이터 결과)
 - 주요 결과: `시장잠재량연산결과_{scenario}_건물벽면포함.csv`
 - 지역별 집계: `시도별_집계결과_건물벽면포함.csv`, `시군구별_집계결과_건물벽면포함.csv`
 - 발전량(TWh/년) 및 설비용량(GW) 지표 모두 포함
+
+### `3. Image/` 폴더 (시각화 결과)
+- `1km격자/`: 격자별분포_{컬럼명}.png
+- `시도별/`: 시도별합계_{컬럼명}.png
+- `시군구별/`: 시군구별합계_{컬럼명}.png
+- `동별/`: 동별합계_{컬럼명}.png
