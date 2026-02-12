@@ -447,17 +447,17 @@ def save_result_csv(df, filename, output_folder="2. Output"):
     print(f"총 소요 시간: {elapsed_time:.2f}초")
 
 def summarize_by_sido(df):
-    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
+    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and ('설비용량' in col or '발전량' in col)]
     result = df.groupby('SIDO_NM')[columns_to_sum].sum().reset_index()
     return result
 
 def summarize_by_sigungu(df):
-    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
+    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and ('설비용량' in col or '발전량' in col)]
     result = df.groupby(['SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD'])[columns_to_sum].sum().reset_index()
     return result
 
 def summarize_by_dong(df):
-    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and '설비용량' in col]
+    columns_to_sum = [col for col in df.columns if '시장잠재량' in col and ('설비용량' in col or '발전량' in col)]
     result = df.groupby(['SIDO_NM', 'SIGUNGU_NM', 'SIGUNGU_CD', 'ADM_NM', 'ADM_CD'])[columns_to_sum].sum().reset_index()
     return result
 
