@@ -18,12 +18,14 @@
 Solar-Potential/
 ├── 01. Market Potential_Data Merge.py    # 데이터 병합 스크립트
 ├── test1.py                              # 시장잠재량 분석 메인 코드
+├── visualization.py                      # 지도 시각화 모듈
 ├── CLAUDE.md                             # Claude Code 가이드
 ├── README.md                             # 프로젝트 설명
 ├── 1. Raw Data/                          # 원본 데이터 (25 CSV + 1 Excel)
 │   ├── 시장잠재량 Parameter_4.xlsx       # 경제성 파라미터
 │   ├── b_전국격자_100_통합_20250507.csv  # 기준 격자 데이터
-│   ├── 격자b_SGIS내륙정보(2025).csv      # 내륙 격자 정보 (행정코드 포함)
+│   ├── 격자b_SGIS내륙정보(2025).csv      # 내륙 격자 정보 (행정구역 포함)
+│   ├── 격자b_SGIS내륙정보.shp            # 격자 geometry (시각화용)
 │   ├── 산업단지.csv                      # 가중치 계산용
 │   ├── 주차장(교통시설UQS200210290).csv
 │   ├── 경지계-농업진흥구역(UEA110)_v2.csv
@@ -43,16 +45,24 @@ Solar-Potential/
 │   ├── 배제24종.csv
 │   ├── 배제28종(1-26+6m폭도로100m버퍼+철도).csv  # (선택)
 │   ├── 배제29종(실조례안).csv
-│   ├── 영농지_S1.csv                     # 영농형 시나리오
-│   ├── 영농지_S2.csv
-│   ├── 영농지_S3.csv
-│   ├── 영농지_S4.csv
-│   └── ... (기타 배제지역 파일)
+│   ├── Solar_S1~S4.csv                   # 태양광 시나리오
+│   ├── 영농지_S1~S4.csv                  # 영농형 시나리오
+│   ├── bnd_sido_00_2024_2Q.gpkg          # 시도 경계 (17개)
+│   ├── bnd_sigungu_00_2024_2Q.gpkg       # 시군구 경계 (252개)
+│   ├── bnd_dong_00_2024_2Q.gpkg          # 읍면동 경계
+│   ├── a0000000a.gpkg                    # 1km 격자 geometry
+│   └── id_key_202601291842.csv           # 100m-1km 격자 ID 매핑
 ├── 2. Output/                            # 분석 결과 저장
 │   ├── 시장잠재량연산결과_{scenario}_건물벽면포함.csv
-│   ├── 시도별_집계결과_건물벽면포함.csv
-│   └── 시군구별_집계결과_건물벽면포함.csv
-└── data_merge__{timestamp}.csv          # 병합 데이터 (~4.5GB)
+│   ├── 시도별_집계결과_{scenario}_건물벽면포함.csv
+│   ├── 시군구별_집계결과_{scenario}_건물벽면포함.csv
+│   └── 동별_집계결과_{scenario}_건물벽면포함.csv
+├── 3. Image/                             # 시각화 결과
+│   ├── 1km격자/                          # 격자별 분포도
+│   ├── 시도별/                           # 시도별 합계
+│   ├── 시군구별/                         # 시군구별 합계
+│   └── 동별/                             # 읍면동별 합계
+└── data_merge__{timestamp}.csv           # 병합 데이터 (~4.5GB)
 ```
 
 ## 🚀 시작하기
@@ -73,11 +83,11 @@ cd Solar-Potential
 
 2. 필요한 패키지 설치
 ```bash
-pip install pandas numpy geopandas openpyxl matplotlib folium contextily dbfread
+pip install pandas numpy geopandas openpyxl matplotlib contextily
 ```
 
 3. 데이터 준비
-   - `1. Raw Data/` 폴더에 25개 CSV + 1개 Excel 파일 배치
+   - `1. Raw Data/` 폴더에 원본 데이터 파일 배치
    - 대용량 파일은 별도 공유 (Google Drive/FTP 예정)
 
 ## 📊 사용 방법
@@ -95,28 +105,38 @@ python "01. Market Potential_Data Merge.py"
 
 ### 2단계: 파일명 업데이트
 
-`test1.py` 파일의 485번 라인 수정:
+`test1.py`에서 병합 데이터 파일명을 생성된 타임스탬프에 맞게 수정:
 ```python
-df = pd.read_csv('data_merge__{생성된timestamp}.csv', low_memory=False)
+df = pd.read_csv('data_merge__{생성된timestamp}.csv', low_memory=False, encoding='euc-kr')
 ```
 
 ### 3단계: 시장잠재량 분석
 
 ```python
-from test1 import main
-
-# 기본 분석
-scenario_name = 'calc_reject_영농지_S1'
+# 기본 실행 - 시장잠재량 결과만 반환
+scenario_name = 'calc_reject_배제29종(실조례안)'
 df_result = main(scenario_name)
 
-# LCOE 포함 전체 데이터 반환
-df_lcoe = main(scenario_name, return_lcoe=True)
+# 지도 시각화 포함 실행
+df_result = main(scenario_name, create_map_viz=True)
 
-# 요약 출력 포함
+# 전체 옵션 실행
 df_result = main(scenario_name,
                  print_summary=True,
+                 create_viz=True,
+                 create_map_viz=True,
                  summarize_area=True)
 ```
+
+**main() 매개변수:**
+| 매개변수 | 기본값 | 설명 |
+|----------|--------|------|
+| `scenario_name` | (필수) | 배제 시나리오 컬럼명 |
+| `print_summary` | False | 시장잠재량 결과 요약 출력 |
+| `create_viz` | False | 건물벽면 히스토그램 생성 |
+| `create_map_viz` | False | 지도 시각화 생성 (3. Image/) |
+| `summarize_area` | False | 시도/시군구/동별 집계 및 저장 |
+| `return_lcoe` | False | LCOE 컬럼 포함 전체 DataFrame 반환 |
 
 ## 📈 데이터 구조
 
@@ -140,18 +160,26 @@ df_result = main(scenario_name,
 - 건물지붕/벽면
 - 수상형
 - 영농형 (8년/20년/23년 계약)
-- 토지
-- 산업단지, 주차장
+- 토지 (계통반영 포함)
 
 ### 시나리오 분석
 다양한 배제 시나리오 기반 시장잠재량 산출:
-- 배제21종, 24종, 28종(선택), 29종
-- 영농지 S1~S4 시나리오
+- 배제21종, 24종, 28종, 29종(실조례안)
+- Solar S1~S4 (태양광 시나리오)
+- 영농지 S1~S4 (영농형 시나리오)
+
+### 지도 시각화
+`visualization.py` 모듈을 통한 전국 분포도 생성:
+- **1km격자**: 격자 단위 전국 분포도
+- **시도별**: 시도 단위 합계 choropleth (17개)
+- **시군구별**: 시군구 단위 합계 choropleth (252개)
+- **동별**: 읍면동 단위 합계 choropleth
+
+경계 파일: 2024년 2분기 기준 gpkg 형식, 등분(Equal Interval) 분류 방식
 
 ### 출력 결과
-- 설비용량 (GW)
-- 발전량 (TWh/년)
-- 시도별/시군구별 집계
+- 발전량 (TWh/년) 및 설비용량 (GW)
+- 시도별/시군구별/동별 집계
 - LCOE 상세 데이터
 
 ## ⚙️ 설정
@@ -198,3 +226,4 @@ df_result = main(scenario_name,
 - 원본 데이터 파일은 용량이 크므로 별도 공유 예정
 - 분석 실행 전 충분한 메모리와 저장공간 확보 필요
 - 한글 변수명이 광범위하게 사용됨 (도메인 특성 반영)
+- 데이터의 시군구 수(230개)와 경계 파일(252개)은 행정구역 변경으로 차이 있음
