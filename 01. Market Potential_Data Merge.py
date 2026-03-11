@@ -226,9 +226,9 @@ df_merged['id'] = df_merged['id'].round().astype(int)
 # 배제 파일 목록
 cond_reject = ['배제21종', '배제24종']  #조건에 해당하는
 calc_reject = ['배제28종(1-26+6m폭도로100m버퍼+철도)'
-              ,'Solar_S1', 'Solar_S2', 'Solar_S3','Solar_S4'
-              ,'영농지_S1','영농지_S2','영농지_S3','영농지_S4'
-              , '배제29종(실조례안)']
+              , '배제29종(실조례안)'
+              ,'rule1_26_rail_rd100_res200'    ##주거밀집지역신규로직적용파일
+              ,'rule1_26_rail_rd200_res300']   ##주거밀집지역신규로직적용파일 
 
 
 # 병합 함수
