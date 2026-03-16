@@ -50,7 +50,7 @@ def calculate_potential(df, lcoe_col1, lcoe_col2, threshold, area_factor):
     - area_factor: 해당 부문의 태양광 면적 비율
     """
     land = df['inland_area(km2)'].fillna(0)
-    exclusion_area_raw = df['(기술적_지원+규제)_배제지역(km2)'].fillna(0)   #이것도 바궈야되는거 아님감?
+    exclusion_area_raw = df['(기술적_지원+규제)_배제지역(km2)'].fillna(0)   #이것도 바꿔야되는거 아님감?
     exclusion_area = np.minimum(exclusion_area_raw, land)
     exclusion_codition_area = df['(기술적_지원+규제)_배제지역_조건(km2)'].fillna(0)
     building_area = np.minimum(df['건물면적(km2)'].fillna(0), df['inland_area(km2)'].fillna(0))
@@ -508,7 +508,7 @@ def main(scenario_name: str,
     ##  ***
     ##  ***
     
-    df = pd.read_csv('data_merge__202602051631.csv', low_memory=False, encoding = 'euc-kr')
+    df = pd.read_csv('data_merge__202603161514.csv', low_memory=False, encoding = 'euc-kr')
     
     ## ***
     ## ***
@@ -805,7 +805,7 @@ def main(scenario_name: str,
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
-scenario_name = 'calc_reject_배제29종(실조례안)'
+scenario_name = 'calc_reject_r1_25_진흥구역_rail_orid_rdres'
 # scenario_name = 'calc_reject_영농지_S1'
 
 # df_result = main(scenario_name)  # main 함수 실행
