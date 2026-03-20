@@ -229,8 +229,9 @@ calc_reject = ['배제28종(1-26+6m폭도로100m버퍼+철도)'
               , '배제29종(실조례안)'
               ,'r_1_26_rail_rd100_res200'    ##도로, 주거밀집지역신규로직적용파일
               ,'r_1_26_rail_rd200_res300'
-              ,'r_1_25_진흥구역_rail_orid_rdres'
-              ,'r_1_25_진흥지역_rail_orid_rdres']   
+            #   ,'r_1_25_진흥구역_rail_orid_rdres'
+            #   ,'r_1_25_진흥지역_rail_orid_rdres'
+              ,'r_1_26_rail_rd100_res100']   
 
 
 # 병합 함수
