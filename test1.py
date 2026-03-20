@@ -805,7 +805,7 @@ def main(scenario_name: str,
 # 실행
 # 시나리오 연산
 # 기존 시나리오 컬럼명 중 하나를 인자로 전달
- scenario_name = 'calc_reject_영농형_reverse'     #1_25 +농업진흥구역+실조례안 도로,주택을 경지계(전답과)에서 빼기한 영역의 역배제영역
+scenario_name = 'calc_reject_영농형_reverse'     #1_25 +농업진흥구역+실조례안 도로,주택을 경지계(전답과)에서 빼기한 영역의 역배제영역
 # scenario_name = 'calc_reject_r_1_26_rail_rd100_res200'       #도로,주택 조례안기준 상한선 적용 
 # scenario_name = 'calc_reject_r_1_26_rail_rd200_res300'       #도로,주택 조례안기준 상한선 적용 
 # scenario_name = 'calc_reject_r_1_26_rail_rd100_res100'       #도로,주택 조례안기준 100, 100 상한선 적용    
